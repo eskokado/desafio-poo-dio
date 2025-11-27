@@ -150,3 +150,48 @@ Se possível:<br>
 ------------
 
 Disponibilizado com ♥ por [cami-la](https://www.linkedin.com/in/cami-la/ "cami-la").
+ 
+## API REST (Java 11, Swagger, Postgres via Docker)
+
+Adicionamos uma API REST que expõe operações sobre o domínio mantendo a estrutura original. A persistência usa Postgres (via Docker Compose), migrações com Flyway e documentação automática com Swagger (springdoc).
+
+### Executar localmente
+- Pré-requisitos: Java 11 e Maven.
+- Build e execução:
+  - `mvn spring-boot:run`
+  - A API inicia em `http://localhost:8080`.
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+### Endpoints principais
+- `POST /api/bootcamps` cria um bootcamp
+  - Body: `{ "nome": "Bootcamp Java", "descricao": "Trilha POO" }`
+- `GET /api/bootcamps` lista bootcamps
+- `POST /api/bootcamps/{id}/cursos` adiciona curso
+  - Body: `{ "titulo": "Coleções", "descricao": "List/Set/Map", "cargaHoraria": 8 }`
+- `POST /api/bootcamps/{id}/mentorias` adiciona mentoria
+  - Body: `{ "titulo": "Carreira", "descricao": "Mentoria", "data": "2025-01-15" }`
+- `POST /api/bootcamps/{id}/inscricoes/{devId}` inscreve um dev no bootcamp
+- `POST /api/devs` cria dev
+  - Body: `{ "nome": "Camila" }`
+- `GET /api/devs` lista devs
+- `POST /api/devs/{id}/progredir` move primeiro conteúdo de inscritos para concluídos
+- `GET /api/devs/{id}/xp` soma XP dos conteúdos concluídos
+
+### Docker
+- Execução sem Java local, apenas Docker (API + Postgres):
+  - Requisitos: Docker Desktop com Compose v2.
+  - Opcional: crie `.env` com `APP_PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`.
+  - Subir: `docker compose up --build -d` (aguarda healthcheck do Postgres e inicia a API)
+  - Logs:
+    - `docker compose logs -f db`
+    - `docker compose logs -f api`
+  - Parar/Remover: `docker compose down -v` (remove volumes do Postgres)
+  - Porta API: `8080` (`APP_PORT`), Porta DB: `5432` (`DB_PORT`).
+
+### Banco de dados
+- Postgres (via Docker Compose): serviço `db` com usuário, senha e base configuráveis.
+- Migrações Flyway em `src/main/resources/db/migration` executadas automaticamente no startup.
+
+### Observações de arquitetura
+- Mantivemos o domínio original e introduzimos uma camada de entidades JPA com herança (`ConteudoEntity` → `CursoEntity` e `MentoriaEntity`) para demonstrar polimorfismo sem alterar as classes existentes.
+- Serviços implementam regras do desafio: inscrição em bootcamp, progresso de dev e cálculo de XP.
